@@ -1,20 +1,21 @@
 import { Queue, QueueOptions } from "bullmq";
-import Redis from "ioredis";
 
-function createConnection() {
+function getConnection() {
   const url = process.env.REDIS_URL;
   if (!url) throw new Error("REDIS_URL not set");
 
-  return new Redis(url, {
-    maxRetriesPerRequest: null,
+  const isTls = url.startsWith("rediss://");
+  return {
+    url,
+    maxRetriesPerRequest: null as null,
     enableReadyCheck: false,
     lazyConnect: true,
-    tls: url.startsWith("rediss://") ? { rejectUnauthorized: false } : undefined,
-  });
+    tls: isTls ? { rejectUnauthorized: false } : undefined,
+  };
 }
 
 const defaultOptions: QueueOptions = {
-  connection: createConnection(),
+  connection: getConnection(),
   defaultJobOptions: {
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
@@ -25,7 +26,7 @@ export const monitorQueue = new Queue("monitor-checks", defaultOptions);
 
 export const alertQueue = new Queue("alert-delivery", {
   ...defaultOptions,
-  connection: createConnection(),
+  connection: getConnection(),
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 2000 },
@@ -36,7 +37,7 @@ export const alertQueue = new Queue("alert-delivery", {
 
 export const maintenanceQueue = new Queue("maintenance-ops", {
   ...defaultOptions,
-  connection: createConnection(),
+  connection: getConnection(),
 });
 
 export async function addMonitorJob(monitorId: string, intervalSeconds: number) {
