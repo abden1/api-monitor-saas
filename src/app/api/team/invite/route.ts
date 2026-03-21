@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { Resend } from "resend";
 import { addDays } from "date-fns";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || "re_placeholder");
 
 const inviteSchema = z.object({
   email: z.string().email(),
