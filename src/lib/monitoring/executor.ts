@@ -314,8 +314,10 @@ async function checkSsl(url: string, timeout: number): Promise<CheckResult> {
           (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        const issuer = cert.issuer?.O || cert.issuer?.CN || null;
-        const subject = cert.subject?.CN || null;
+        const issuerRaw = cert.issuer?.O || cert.issuer?.CN || null;
+        const issuer = Array.isArray(issuerRaw) ? issuerRaw[0] ?? null : issuerRaw;
+        const subjectRaw = cert.subject?.CN || null;
+        const subject = Array.isArray(subjectRaw) ? subjectRaw[0] ?? null : subjectRaw;
         const isSelfSigned = cert.issuer?.CN === cert.subject?.CN;
 
         const isExpired = expiresAt < now;
