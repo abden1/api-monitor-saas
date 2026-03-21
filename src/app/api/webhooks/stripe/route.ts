@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, handleSubscriptionEvent } from "@/lib/billing/stripe";
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
