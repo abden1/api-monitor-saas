@@ -47,7 +47,7 @@ export default async function MonitorDetailPage({ params }: PageProps) {
     }),
   ]);
 
-  const regions = [...new Set(recentChecks.map((c) => c.region))];
+  const regions = Array.from(new Set(recentChecks.map((c) => c.region)));
 
   return (
     <div className="space-y-6">
