@@ -185,7 +185,7 @@ export default async function StatusPagePublic({ params }: Props) {
                     {incident.status.toLowerCase().replace("_", " ")}
                   </span>
                 </div>
-                <p className="text-sm text-red-600 mt-1">Affected: {incident.monitor.name}</p>
+                <p className="text-sm text-red-600 mt-1">Affected: {incident.monitor?.name}</p>
                 {incident.updates[0] && (
                   <p className="text-sm text-red-700 mt-2 italic">
                     {incident.updates[0].message}
@@ -255,7 +255,7 @@ export default async function StatusPagePublic({ params }: Props) {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {incident.monitor.name}
+                  {incident.monitor?.name}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {format(incident.createdAt, "MMM d, HH:mm")} UTC
