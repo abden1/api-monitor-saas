@@ -1,8 +1,7 @@
 import { Queue, QueueOptions } from "bullmq";
 
 function getConnection() {
-  const url = process.env.REDIS_URL;
-  if (!url) throw new Error("REDIS_URL not set");
+  const url = process.env.REDIS_URL || "redis://localhost:6379";
 
   const isTls = url.startsWith("rediss://");
   return {
