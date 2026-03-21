@@ -63,7 +63,7 @@ export default async function StatusPagePublic({ params }: Props) {
         orderBy: [{ displayOrder: "asc" }],
         include: {
           monitor: {
-            select: { id: true, name: true, currentStatus: true },
+            select: { id: true, name: true, status: true },
           },
         },
       },
@@ -122,7 +122,7 @@ export default async function StatusPagePublic({ params }: Props) {
   }
 
   // Compute overall system status
-  const allStatuses = statusPage.components.map((c) => c.monitor?.currentStatus ?? null);
+  const allStatuses = statusPage.components.map((c) => c.monitor?.status ?? null);
   const hasDown = allStatuses.some((s) => s === "DOWN");
   const hasDegraded = allStatuses.some((s) => s === "DEGRADED");
   const overallStatus = hasDown ? "DOWN" : hasDegraded ? "DEGRADED" : "UP";
@@ -219,10 +219,10 @@ export default async function StatusPagePublic({ params }: Props) {
                 <div key={comp.id} className="px-5 py-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <StatusDot status={comp.monitor?.currentStatus ?? null} />
+                      <StatusDot status={comp.monitor?.status ?? null} />
                       <span className="font-medium">{comp.name}</span>
                     </div>
-                    <StatusBadge status={comp.monitor?.currentStatus ?? null} />
+                    <StatusBadge status={comp.monitor?.status ?? null} />
                   </div>
                   {monitorDays.length > 0 && (
                     <>
