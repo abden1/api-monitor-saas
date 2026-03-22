@@ -3,9 +3,9 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BillingButtons } from "@/components/settings/billing-buttons";
+import { BillingButtons, PlanUpgradeButton } from "@/components/settings/billing-buttons";
 import { PLANS } from "@/lib/billing/plans";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Zap } from "lucide-react";
 import { format } from "date-fns";
 
 export default async function BillingPage() {
@@ -96,23 +96,79 @@ export default async function BillingPage() {
           <CardTitle>Compare Plans</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            {Object.entries(PLANS).map(([planKey, planConfig]) => (
-              <div
-                key={planKey}
-                className={`border rounded-lg p-4 ${team.plan === planKey ? "border-primary bg-primary/5" : ""}`}
-              >
-                <p className="font-semibold text-sm">{planConfig.name}</p>
-                <p className="text-2xl font-bold mt-1">${planConfig.price}</p>
-                <p className="text-xs text-muted-foreground">/month</p>
-                <div className="mt-3 space-y-1">
-                  <p className="text-xs">{planConfig.monitors === -1 ? "Unlimited" : planConfig.monitors} monitors</p>
-                  <p className="text-xs">{planConfig.checkInterval}s intervals</p>
-                  {planConfig.sms && <p className="text-xs text-green-600">SMS alerts</p>}
-                  {planConfig.apiAccess && <p className="text-xs text-green-600">API access</p>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {Object.entries(PLANS).map(([planKey, planConfig]) => {
+              const isCurrent = team.plan === planKey;
+              const isDowngrade = ["FREE", "STARTER", "PRO", "ENTERPRISE"].indexOf(planKey) <
+                ["FREE", "STARTER", "PRO", "ENTERPRISE"].indexOf(team.plan);
+              const isPaid = planKey !== "FREE";
+              return (
+                <div
+                  key={planKey}
+                  className={`border rounded-lg p-5 flex flex-col gap-3 relative ${
+                    isCurrent ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:border-gray-400 transition-colors"
+                  }`}
+                >
+                  {isCurrent && (
+                    <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
+                      Current plan
+                    </span>
+                  )}
+                  <div>
+                    <p className="font-bold text-base">{planConfig.name}</p>
+                    <div className="flex items-end gap-1 mt-1">
+                      <span className="text-3xl font-bold">${planConfig.price}</span>
+                      <span className="text-sm text-muted-foreground mb-1">/mo</span>
+                    </div>
+                  </div>
+                  <ul className="space-y-1.5 text-sm flex-1">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      {planConfig.monitors === -1 ? "Unlimited" : planConfig.monitors} monitors
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      {planConfig.checkInterval}s check interval
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      {planConfig.statusPages === -1 ? "Unlimited" : planConfig.statusPages} status pages
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                      {planConfig.teamMembers === -1 ? "Unlimited" : planConfig.teamMembers} team members
+                    </li>
+                    {planConfig.sms && (
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        SMS alerts
+                      </li>
+                    )}
+                    {planConfig.apiAccess && (
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        API access
+                      </li>
+                    )}
+                    {planConfig.multiRegion && (
+                      <li className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                        Multi-region
+                      </li>
+                    )}
+                  </ul>
+                  {!isCurrent && isPaid && !isDowngrade && (
+                    <PlanUpgradeButton plan={planKey} />
+                  )}
+                  {isCurrent && planKey === "FREE" && (
+                    <p className="text-xs text-muted-foreground text-center">Your current plan</p>
+                  )}
+                  {isDowngrade && !isCurrent && (
+                    <p className="text-xs text-muted-foreground text-center">Manage via portal to downgrade</p>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

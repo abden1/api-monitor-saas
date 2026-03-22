@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, Zap } from "lucide-react";
 
 interface Props {
   currentPlan: string;
@@ -50,6 +50,47 @@ export function BillingButtons({ currentPlan, hasSubscription }: Props) {
     <Button variant="outline" onClick={handleManage} disabled={loading}>
       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       Manage Subscription
+    </Button>
+  );
+}
+
+export function PlanUpgradeButton({ plan }: { plan: string }) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const labels: Record<string, string> = {
+    STARTER: "Get Starter",
+    PRO: "Get Pro",
+    ENTERPRISE: "Get Enterprise",
+  };
+
+  return (
+    <Button
+      className="w-full mt-1"
+      variant={plan === "PRO" ? "default" : "outline"}
+      onClick={handleClick}
+      disabled={loading}
+    >
+      {loading ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : (
+        <Zap className="mr-2 h-4 w-4" />
+      )}
+      {labels[plan] ?? `Upgrade to ${plan}`}
     </Button>
   );
 }
