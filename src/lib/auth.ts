@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { authConfig } from "@/auth.config";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -11,16 +12,10 @@ const loginSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
+  ...authConfig,
   adapter: PrismaAdapter(db),
-  session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  pages: {
-    signIn: "/login",
-    error: "/login",
-  },
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
+  secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
   providers: [
     Credentials({
       name: "credentials",
@@ -56,24 +51,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Load team info into JWT so middleware can read it without DB
+        const membership = await db.teamMember.findFirst({
+          where: { userId: user.id as string },
+          include: { team: true },
+          orderBy: { createdAt: "asc" },
+        });
+        if (membership) {
+          token.teamId = membership.teamId;
+          token.teamSlug = membership.team.slug;
+          token.role = membership.role;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (token.id) {
         session.user.id = token.id as string;
-
-        // Load team membership
-        const membership = await db.teamMember.findFirst({
-          where: { userId: token.id as string },
-          include: { team: true },
-          orderBy: { createdAt: "asc" },
-        });
-
-        if (membership) {
-          (session.user as { teamId?: string; teamSlug?: string; role?: string }).teamId = membership.teamId;
-          (session.user as { teamId?: string; teamSlug?: string; role?: string }).teamSlug = membership.team.slug;
-          (session.user as { teamId?: string; teamSlug?: string; role?: string }).role = membership.role;
+        if (token.teamId) {
+          (session.user as Record<string, unknown>).teamId = token.teamId;
+          (session.user as Record<string, unknown>).teamSlug = token.teamSlug;
+          (session.user as Record<string, unknown>).role = token.role;
         }
       }
       return session;

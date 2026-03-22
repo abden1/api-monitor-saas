@@ -1,13 +1,20 @@
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/auth.config";
 import { NextResponse } from "next/server";
+
+// Use the Edge-safe config (no bcryptjs, no Prisma) for middleware
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
   const { nextUrl, auth: session } = req;
-  const isLoggedIn = !!session;
+  const isLoggedIn = !!session?.user;
 
-  const isAuthPage = nextUrl.pathname.startsWith("/login") ||
+  const isAuthPage =
+    nextUrl.pathname.startsWith("/login") ||
     nextUrl.pathname.startsWith("/register");
-  const isDashboard = nextUrl.pathname.startsWith("/dashboard") ||
+
+  const isDashboard =
+    nextUrl.pathname.startsWith("/dashboard") ||
     nextUrl.pathname.startsWith("/monitors") ||
     nextUrl.pathname.startsWith("/incidents") ||
     nextUrl.pathname.startsWith("/status-pages") ||
@@ -28,7 +35,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|status).*)",
-  ],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|status).*)"],
 };
