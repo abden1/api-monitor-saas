@@ -45,11 +45,17 @@ export default function RegisterPage() {
       }
 
       // Auto sign in after registration
-      await signIn("credentials", {
+      const signInResult = await signIn("credentials", {
         email: form.email,
         password: form.password,
         redirect: false,
       });
+
+      if (signInResult?.error) {
+        // Account created but auto-login failed — redirect to login
+        router.push("/login?registered=1");
+        return;
+      }
 
       router.push("/dashboard");
     } catch {

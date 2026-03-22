@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const registered = searchParams.get("registered");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,10 +31,11 @@ export default function LoginPage() {
 
     setLoading(false);
 
-    if (result?.error) {
+    if (!result || result.error) {
       setError("Invalid email or password");
     } else {
       router.push("/dashboard");
+      router.refresh();
     }
   }
 
@@ -44,6 +47,11 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {registered && (
+            <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md border border-green-200">
+              Account created! Sign in below.
+            </div>
+          )}
           {error && (
             <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
               {error}
