@@ -20,9 +20,10 @@ export const authConfig = {
       if (token.id) {
         session.user.id = token.id as string;
         if (token.teamId) {
-          (session.user as Record<string, unknown>).teamId = token.teamId;
-          (session.user as Record<string, unknown>).teamSlug = token.teamSlug;
-          (session.user as Record<string, unknown>).role = token.role;
+          const u = session.user as unknown as Record<string, unknown>;
+          u.teamId = token.teamId;
+          u.teamSlug = token.teamSlug;
+          u.role = token.role;
         }
       }
       return session;
