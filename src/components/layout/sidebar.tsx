@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  Activity,
   BarChart3,
   Bell,
   Globe,
@@ -10,6 +10,7 @@ import {
   Settings,
   Users,
   AlertTriangle,
+  Activity,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,10 +31,9 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-card min-h-screen">
-      <div className="p-6 border-b">
+      <div className="p-4 border-b">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="font-bold text-lg">API Monitor</span>
+          <Image src="/logo.png" alt="API Monitor" width={120} height={40} className="object-contain" />
         </Link>
       </div>
 

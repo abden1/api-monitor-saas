@@ -8,18 +8,20 @@ export async function GET() {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const secret = speakeasy.generateSecret({
-    name: `API Monitor (${session.user.email})`,
-    length: 32,
-  });
+  const secret = speakeasy.generateSecret({ length: 32 });
 
-  // Temporarily store secret in session (in real app, use a temp token)
+  // Store secret temporarily (verified and finalized on POST)
   await db.user.update({
     where: { id: session.user.id },
     data: { totpSecret: secret.base32 },
   });
 
-  const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url!);
+  // Build standard otpauth URL that all authenticator apps understand
+  const issuer = "API Monitor";
+  const account = encodeURIComponent(session.user.email!);
+  const otpauthUrl = `otpauth://totp/${encodeURIComponent(issuer)}:${account}?secret=${secret.base32}&issuer=${encodeURIComponent(issuer)}&algorithm=SHA1&digits=6&period=30`;
+
+  const qrCodeUrl = await QRCode.toDataURL(otpauthUrl);
 
   return NextResponse.json({ qrCode: qrCodeUrl, secret: secret.base32 });
 }
