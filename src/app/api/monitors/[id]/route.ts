@@ -97,9 +97,11 @@ export async function PUT(
     },
   });
 
-  // Reschedule if interval or active status changed
+  // Reschedule if interval or active status changed (non-blocking)
   if (parsed.data.interval !== undefined || parsed.data.isActive !== undefined) {
-    await rescheduleMonitor(updated);
+    rescheduleMonitor(updated).catch((err) => {
+      console.error("[Monitor] Failed to reschedule:", err.message);
+    });
   }
 
   return NextResponse.json({ monitor: updated });
@@ -118,7 +120,7 @@ export async function DELETE(
   const monitor = await getMonitorForUser(params.id, teamId);
   if (!monitor) return NextResponse.json({ error: "Monitor not found" }, { status: 404 });
 
-  await unscheduleMonitor(params.id);
+  unscheduleMonitor(params.id).catch(() => {});
   await db.monitor.delete({ where: { id: params.id } });
 
   return NextResponse.json({ success: true });

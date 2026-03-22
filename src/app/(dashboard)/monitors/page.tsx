@@ -59,23 +59,28 @@ export default function MonitorsPage() {
     setCreating(true);
     setError("");
 
-    const res = await fetch("/api/monitors", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/monitors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await res.json();
-    setCreating(false);
+      const data = await res.json();
 
-    if (!res.ok) {
-      setError(data.error || "Failed to create monitor");
-      return;
+      if (!res.ok) {
+        setError(data.error || "Failed to create monitor");
+        return;
+      }
+
+      setShowCreate(false);
+      setForm({ name: "", url: "", type: "HTTP", method: "GET", expectedStatus: 200, timeout: 30000, interval: 60 });
+      loadMonitors();
+    } catch {
+      setError("Request failed. Please try again.");
+    } finally {
+      setCreating(false);
     }
-
-    setShowCreate(false);
-    setForm({ name: "", url: "", type: "HTTP", method: "GET", expectedStatus: 200, timeout: 30000, interval: 60 });
-    loadMonitors();
   }
 
   async function togglePause(id: string) {

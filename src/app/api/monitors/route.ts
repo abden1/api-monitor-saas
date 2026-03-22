@@ -90,8 +90,10 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Schedule the monitor
-  await scheduleMonitor(monitor);
+  // Schedule the monitor (non-blocking — don't fail if Redis is unavailable)
+  scheduleMonitor(monitor).catch((err) => {
+    console.error("[Monitor] Failed to schedule:", err.message);
+  });
 
   return NextResponse.json({ monitor }, { status: 201 });
 }
