@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import { hasRedis } from "./env";
 
 function getConnection() {
   const url = process.env.REDIS_URL || "redis://localhost:6379";
@@ -53,11 +54,29 @@ export function getMaintenanceQueue(): Queue {
 }
 
 // Keep these as named exports for worker.ts compatibility
-export const monitorQueue = { add: (...args: Parameters<Queue["add"]>) => getMonitorQueue().add(...args), getRepeatableJobs: () => getMonitorQueue().getRepeatableJobs(), removeRepeatableByKey: (key: string) => getMonitorQueue().removeRepeatableByKey(key) };
-export const alertQueue = { add: (...args: Parameters<Queue["add"]>) => getAlertQueue().add(...args) };
-export const maintenanceQueue = { add: (...args: Parameters<Queue["add"]>) => getMaintenanceQueue().add(...args) };
+// In serverless mode (no Redis) checks are run by /api/cron/checks, alerts go out at once and the
+// daily maintenance runs from the same route, so these become no-ops or direct calls.
+export const monitorQueue = {
+  add: async (...args: Parameters<Queue["add"]>) => (hasRedis ? getMonitorQueue().add(...args) : undefined),
+  getRepeatableJobs: async () => (hasRedis ? getMonitorQueue().getRepeatableJobs() : []),
+  removeRepeatableByKey: async (key: string) => (hasRedis ? getMonitorQueue().removeRepeatableByKey(key) : false),
+};
+export const alertQueue = {
+  add: async (...args: Parameters<Queue["add"]>) => {
+    if (hasRedis) return getAlertQueue().add(...args);
+    const { deliverAlert } = await import("@/lib/alerts/deliver");
+    await deliverAlert(args[1] as Parameters<typeof deliverAlert>[0]).catch((err: unknown) => {
+      console.error("[Alert] Delivery failed:", err instanceof Error ? err.message : err);
+    });
+    return undefined;
+  },
+};
+export const maintenanceQueue = {
+  add: async (...args: Parameters<Queue["add"]>) => (hasRedis ? getMaintenanceQueue().add(...args) : undefined),
+};
 
 export async function addMonitorJob(monitorId: string, intervalSeconds: number) {
+  if (!hasRedis) return;
   await getMonitorQueue().add(
     `check-${monitorId}`,
     { monitorId },
@@ -66,12 +85,14 @@ export async function addMonitorJob(monitorId: string, intervalSeconds: number) 
 }
 
 export async function removeMonitorJob(monitorId: string) {
+  if (!hasRedis) return;
   const repeatableJobs = await getMonitorQueue().getRepeatableJobs();
   const job = repeatableJobs.find((j) => j.id === `monitor-${monitorId}`);
   if (job) await getMonitorQueue().removeRepeatableByKey(job.key);
 }
 
 export async function scheduleAllMonitors() {
+  if (!hasRedis) return;
   const { db } = await import("@/lib/db");
   const monitors = await db.monitor.findMany({
     where: { isActive: true },

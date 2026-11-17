@@ -1,0 +1,19 @@
+# Vercel's free plan runs crons once a day; this runs the due uptime checks every 5 minutes.
+# Optional: set APP_URL (repository variable) if the app moves, and CRON_SECRET (secret) if
+# CRON_SECRET is set on Vercel.
+name: Uptime checks
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run due checks
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://api-monitor-saas-pi.vercel.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS --max-time 90 -H "Authorization: Bearer ${CRON_SECRET}" "${APP_URL}/api/cron/checks" || echo "check run failed"

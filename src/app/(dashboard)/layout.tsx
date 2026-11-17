@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { CheckTicker } from "@/components/layout/check-ticker";
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen">
+      <CheckTicker />
       <Sidebar />
       <div className="flex-1 flex flex-col">
         <Topbar user={{ ...session.user, teamName }} />

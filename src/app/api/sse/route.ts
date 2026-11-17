@@ -5,6 +5,8 @@ import Redis from "ioredis";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
+  // Live events travel over Redis; without it (serverless mode) tell the browser not to reconnect.
+  if (!process.env.REDIS_URL) return new Response(null, { status: 204 });
   const session = await auth();
   if (!session?.user) {
     return new Response("Unauthorized", { status: 401 });

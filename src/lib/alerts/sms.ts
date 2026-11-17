@@ -1,9 +1,12 @@
 import twilio from "twilio";
 
-const client = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
+// Created on first use: twilio() throws when the account settings are missing, and that must not
+// break every route that merely imports the alert code.
+let client: ReturnType<typeof twilio> | null = null;
+function getClient() {
+  if (!client) client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  return client;
+}
 
 interface SmsAlertConfig {
   to: string | string[];
@@ -28,7 +31,7 @@ export async function sendSmsAlert(
 
   await Promise.all(
     recipients.map((to) =>
-      client.messages.create({ from, to, body: message })
+      getClient().messages.create({ from, to, body: message })
     )
   );
 }
