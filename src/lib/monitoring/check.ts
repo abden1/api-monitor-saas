@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { executeCheckWithRetry } from "@/lib/monitoring/executor";
 import { routeAlert, clearAlertCooldown } from "@/lib/alerts/router";
 import { redis } from "@/lib/redis";
-import type { MonitorStatus } from "@prisma/client";
+import type { AlertTrigger, MonitorStatus } from "@prisma/client";
 
 /** Runs one monitor's check in every region, stores the results, opens or resolves incidents and
  *  raises alerts. Shared by the BullMQ worker and the serverless cron route. */
@@ -115,7 +115,7 @@ export async function checkMonitor(monitorId: string): Promise<void> {
   // Check SSL expiry alerts
   if (sslResult?.sslInfo?.daysUntilExpiry !== null && sslResult?.sslInfo?.daysUntilExpiry !== undefined) {
     const days = sslResult.sslInfo.daysUntilExpiry;
-    const triggers = [];
+    const triggers: AlertTrigger[] = [];
     if (days <= 7) triggers.push("SSL_EXPIRY_7" as const);
     else if (days <= 14) triggers.push("SSL_EXPIRY_14" as const);
     else if (days <= 30) triggers.push("SSL_EXPIRY_30" as const);
