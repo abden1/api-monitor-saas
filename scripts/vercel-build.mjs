@@ -16,7 +16,7 @@ if (env.DATABASE_URL && !preview) {
   } catch {
     console.warn("\n⚠ prisma db push did not finish — the schema may need a manual migration. Building anyway.\n");
   }
-} else {
+} else if (!env.DATABASE_URL) {
   console.warn("\n⚠ No database connected (DATABASE_URL / POSTGRES_PRISMA_URL). Add one in Vercel → Storage.\n");
 }
 run("npx next build");
