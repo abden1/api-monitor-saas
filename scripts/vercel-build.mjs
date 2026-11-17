@@ -8,7 +8,9 @@ env.DIRECT_URL ||= env.DATABASE_URL_UNPOOLED || env.POSTGRES_URL_NON_POOLING || 
 const run = (cmd) => execSync(cmd, { stdio: "inherit", env });
 
 run("npx prisma generate");
-if (env.DATABASE_URL) {
+// Only production builds touch the schema: previews share the database and must not change it.
+const preview = env.VERCEL_ENV && env.VERCEL_ENV !== "production";
+if (env.DATABASE_URL && !preview) {
   try {
     run("npx prisma db push --skip-generate");
   } catch {
